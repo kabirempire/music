@@ -2,99 +2,149 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Live Harmonium & Tanpura</title>
+  <title>MACS Raga App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.39/Tone.min.js"></script>
   <style>
+    :root {
+      --bg-color: #fefefe;
+      --accent: #007aff;
+      --text: #1c1c1e;
+    }
     body {
-      font-family: sans-serif;
-      background: #f7f7f7;
       margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-color);
+      color: var(--text);
       padding: 20px;
-      text-align: center;
     }
     h1 {
-      color: #444;
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+    .section {
+      margin: 30px 0;
     }
     .keys {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      margin-top: 20px;
+      gap: 10px;
     }
     .key {
       width: 60px;
-      height: 200px;
-      background: white;
-      border: 1px solid #ccc;
-      margin: 2px;
+      height: 180px;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
       display: flex;
       justify-content: center;
       align-items: flex-end;
       font-weight: bold;
+      font-size: 18px;
+      color: #333;
       cursor: pointer;
-      transition: 0.1s;
       user-select: none;
+      transition: background 0.2s;
     }
     .key:active {
-      background: #cce5ff;
+      background: #cce4ff;
     }
-    button {
-      margin: 20px;
-      padding: 12px 25px;
-      font-size: 16px;
-      background: #007bff;
+    .btn {
+      background: var(--accent);
       color: white;
+      padding: 14px 24px;
+      font-size: 16px;
       border: none;
-      border-radius: 8px;
+      border-radius: 14px;
+      margin: 0 auto;
+      display: block;
+      margin-top: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
       cursor: pointer;
+    }
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 13px;
+      color: #777;
     }
   </style>
 </head>
 <body>
 
-  <h1>🎹 Live Harmonium (C Scale)</h1>
-  <div class="keys">
-    <div class="key" data-note="C4">C</div>
-    <div class="key" data-note="D4">D</div>
-    <div class="key" data-note="E4">E</div>
-    <div class="key" data-note="F4">F</div>
-    <div class="key" data-note="G4">G</div>
-    <div class="key" data-note="A4">A</div>
-    <div class="key" data-note="B4">B</div>
-    <div class="key" data-note="C5">C⁺</div>
+  <h1>🎵 MACS Raga - C Scale</h1>
+
+  <div class="section">
+    <h2 style="text-align:center;">Harmonium 🎹</h2>
+    <div class="keys">
+      <div class="key" data-note="C4">C</div>
+      <div class="key" data-note="D4">D</div>
+      <div class="key" data-note="E4">E</div>
+      <div class="key" data-note="F4">F</div>
+      <div class="key" data-note="G4">G</div>
+      <div class="key" data-note="A4">A</div>
+      <div class="key" data-note="B4">B</div>
+      <div class="key" data-note="C5">C⁺</div>
+    </div>
   </div>
 
-  <button onclick="toggleTanpura()">🎶 Toggle Tanpura (C Drone)</button>
+  <div class="section">
+    <h2 style="text-align:center;">Tanpura 🎶</h2>
+    <button class="btn" onclick="toggleTanpura()">🔁 Toggle Tanpura (C Drone)</button>
+  </div>
+
+  <div class="footer">
+    MACS iOS WebApp • Made for Riyaaaz 📿
+  </div>
 
   <script>
-    // Harmonium sound using Tone.js Synth
-    const synth = new Tone.Synth().toDestination();
+    // Harmonium: smoother sound
+    const harmonium = new Tone.Sampler({
+      urls: {
+        "C4": "C4.mp3",
+        "D4": "D4.mp3",
+        "E4": "E4.mp3",
+        "F4": "F4.mp3",
+        "G4": "G4.mp3",
+        "A4": "A4.mp3",
+        "B4": "B4.mp3",
+        "C5": "C5.mp3",
+      },
+      baseUrl: "https://tonejs.github.io/audio/salamander/",
+    }).toDestination();
+
     document.querySelectorAll('.key').forEach(key => {
       key.addEventListener('click', async () => {
-        await Tone.start(); // needed for mobile
+        await Tone.start();
         const note = key.dataset.note;
-        synth.triggerAttackRelease(note, "4n");
+        harmonium.triggerAttackRelease(note, "1n");
       });
     });
 
-    // Tanpura using looped oscillator
-    let tanpuraPlaying = false;
-    const tanpura = new Tone.PolySynth(Tone.Synth).toDestination();
+    // Tanpura
+    let tanpuraLoop;
+    let isTanpuraPlaying = false;
 
     async function toggleTanpura() {
       await Tone.start();
-      if (!tanpuraPlaying) {
-        Tone.Transport.bpm.value = 60;
-        Tone.Transport.scheduleRepeat(time => {
-          tanpura.triggerAttackRelease(["C3", "G3", "C4"], "8n", time);
-        }, "1n");
+      if (!isTanpuraPlaying) {
+        tanpuraLoop = new Tone.Loop(time => {
+          const synth = new Tone.Synth({
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.1, decay: 0.1, sustain: 0.6, release: 0.8 }
+          }).toDestination();
+          synth.triggerAttackRelease("C3", "2n", time);
+          synth.triggerAttackRelease("G3", "2n", time + 0.3);
+          synth.triggerAttackRelease("C4", "2n", time + 0.6);
+        }, "1m").start(0);
         Tone.Transport.start();
-        tanpuraPlaying = true;
+        isTanpuraPlaying = true;
       } else {
+        tanpuraLoop.stop();
         Tone.Transport.stop();
-        tanpura.releaseAll();
-        tanpuraPlaying = false;
+        isTanpuraPlaying = false;
       }
     }
   </script>
