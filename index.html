@@ -2,91 +2,100 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <title>Live Harmonium & Tanpura</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MACS Raga Tools</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.39/Tone.min.js"></script>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: sans-serif;
+      background: #f7f7f7;
       margin: 0;
       padding: 20px;
-      background: #f2f2f2;
-      color: #333;
+      text-align: center;
     }
     h1 {
-      text-align: center;
+      color: #444;
     }
-    .instrument {
-      margin: 20px 0;
-      text-align: center;
-    }
-    .instrument button {
-      padding: 10px 20px;
-      font-size: 16px;
-      margin: 10px;
-      border: none;
-      background-color: #007BFF;
-      color: white;
-      border-radius: 5px;
-    }
-    textarea {
-      width: 100%;
-      height: 200px;
+    .keys {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
       margin-top: 20px;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      resize: none;
     }
-    .save-btn {
-      display: block;
-      width: 100%;
-      margin-top: 10px;
-      padding: 10px;
-      background: #28a745;
+    .key {
+      width: 60px;
+      height: 200px;
+      background: white;
+      border: 1px solid #ccc;
+      margin: 2px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.1s;
+      user-select: none;
+    }
+    .key:active {
+      background: #cce5ff;
+    }
+    button {
+      margin: 20px;
+      padding: 12px 25px;
+      font-size: 16px;
+      background: #007bff;
       color: white;
-      font-size: 18px;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <h1>🎵 MACS Raga Tools 🎵</h1>
-
-  <div class="instrument">
-    <h2>🎹 Harmonium (C Scale)</h2>
-    <button onclick="playAudio('harmonium')">Play Harmonium</button>
-    <audio id="harmonium" src="harmonium-c.mp3"></audio>
+  <h1>🎹 Live Harmonium (C Scale)</h1>
+  <div class="keys">
+    <div class="key" data-note="C4">C</div>
+    <div class="key" data-note="D4">D</div>
+    <div class="key" data-note="E4">E</div>
+    <div class="key" data-note="F4">F</div>
+    <div class="key" data-note="G4">G</div>
+    <div class="key" data-note="A4">A</div>
+    <div class="key" data-note="B4">B</div>
+    <div class="key" data-note="C5">C⁺</div>
   </div>
 
-  <div class="instrument">
-    <h2>🎶 Tanpura (C Scale)</h2>
-    <button onclick="playAudio('tanpura')">Play Tanpura</button>
-    <audio id="tanpura" src="tanpura-c.mp3" loop></audio>
-  </div>
-
-  <h2>📝 Notes likho yahan:</h2>
-  <textarea id="notes" placeholder="Yahan apne riyaaz ke notes likho..."></textarea>
-  <button class="save-btn" onclick="saveNotes()">Save Notes</button>
+  <button onclick="toggleTanpura()">🎶 Toggle Tanpura (C Drone)</button>
 
   <script>
-    function playAudio(id) {
-      var audio = document.getElementById(id);
-      audio.play();
-    }
+    // Harmonium sound using Tone.js Synth
+    const synth = new Tone.Synth().toDestination();
+    document.querySelectorAll('.key').forEach(key => {
+      key.addEventListener('click', async () => {
+        await Tone.start(); // needed for mobile
+        const note = key.dataset.note;
+        synth.triggerAttackRelease(note, "4n");
+      });
+    });
 
-    function saveNotes() {
-      const notes = document.getElementById('notes').value;
-      localStorage.setItem("raag_notes", notes);
-      alert("Notes saved locally!");
-    }
+    // Tanpura using looped oscillator
+    let tanpuraPlaying = false;
+    const tanpura = new Tone.PolySynth(Tone.Synth).toDestination();
 
-    // Load saved notes on page load
-    window.onload = () => {
-      const saved = localStorage.getItem("raag_notes");
-      if (saved) document.getElementById("notes").value = saved;
+    async function toggleTanpura() {
+      await Tone.start();
+      if (!tanpuraPlaying) {
+        Tone.Transport.bpm.value = 60;
+        Tone.Transport.scheduleRepeat(time => {
+          tanpura.triggerAttackRelease(["C3", "G3", "C4"], "8n", time);
+        }, "1n");
+        Tone.Transport.start();
+        tanpuraPlaying = true;
+      } else {
+        Tone.Transport.stop();
+        tanpura.releaseAll();
+        tanpuraPlaying = false;
+      }
     }
   </script>
 
